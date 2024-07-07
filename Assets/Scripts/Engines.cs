@@ -1,5 +1,3 @@
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,7 +18,7 @@ public class Engines : MonoBehaviour
     [SerializeField] private float depthAcc = 0.1f;
     [SerializeField] private float depthSpeedMax = 5f;         // 1 unit is 1m/s
 
-    [SerializeField] private Slider thrust;
+    [SerializeField] private EnginesSerial enginesSerial;
     [SerializeField] private Slider steering;
     [SerializeField] private Slider depthControl;
     [SerializeField] private Rigidbody2D rb;
@@ -32,7 +30,7 @@ public class Engines : MonoBehaviour
         float targetSteering = steering.value * steeringMax;
         updateSteering(targetSteering);
 
-        float targetThrust = thrust.value * thrustMax;
+        float targetThrust = enginesSerial.getThrust() * thrustMax;
         updateThrust(targetThrust);
 
         float targetDepthSpeed = depthControl.value * depthSpeedMax;
