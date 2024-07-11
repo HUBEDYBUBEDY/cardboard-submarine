@@ -27,13 +27,13 @@ public class Engines : MonoBehaviour
 
     // Update is called once per frame
     void FixedUpdate() {
-        float targetSteering = steering.value * steeringMax;
+        float targetSteering = enginesSerial.getSteerVal() * steeringMax;
         updateSteering(targetSteering);
 
-        float targetThrust = enginesSerial.getThrust() * thrustMax;
+        float targetThrust = enginesSerial.getThrustVal() * thrustMax;
         updateThrust(targetThrust);
 
-        float targetDepthSpeed = depthControl.value * depthSpeedMax;
+        float targetDepthSpeed = enginesSerial.getDepthVal() * depthSpeedMax;
         updateDepth(targetDepthSpeed);
 
         guideLine.updateLine(rb.velocity, thrustSpeed/thrustMax, rb.angularVelocity);

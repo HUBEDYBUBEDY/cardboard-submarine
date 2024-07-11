@@ -29,29 +29,36 @@ void timerSetup() {
   sei();
 }
 
+const char DEPTH_PIN = 0;   // A0
+const char STEER_PIN = 1;   // A1
+const char THRUST_PIN = 2;  // A2
 const float POTENTIOMETER_MAX = 1023.0;
+
+char message[4];
+char symbol[3] = {"DST"};
 
 // Run when Timer1 count matches compare register A
 ISR(TIMER1_COMPA_vect) {
-  int sensorValue = analogRead(A0);
-  float voltage = sensorValue * (1.0 / POTENTIOMETER_MAX);
-  Serial.println(voltage);
+  printVal(DEPTH_PIN);
+  printVal(STEER_PIN);
+  printVal(THRUST_PIN);
 }
 
-void setup()
-{
-  pinMode(A0, INPUT);
+void setup() {
+  pinMode(DEPTH_PIN, INPUT);
+  pinMode(STEER_PIN, INPUT);
+  pinMode(THRUST_PIN, INPUT);
   Serial.begin(9600);
   Serial.println("<Arduino is ready>");
   timerSetup();
 }
 
-void loop()
-{
-  // if (Serial.available() > 0) {
-  //   char rc = Serial.read();
-  //   if(rc != END_MARKER) {
-  //     Serial.println(voltage);
-  //   }
-  // }
+void loop() {
+
+}
+
+void printVal(char pin) {
+  char val = analogRead(pin) * (100 / POTENTIOMETER_MAX);
+  sprintf(message, "%c%u", symbol[pin], val);
+  Serial.println(message);
 }
