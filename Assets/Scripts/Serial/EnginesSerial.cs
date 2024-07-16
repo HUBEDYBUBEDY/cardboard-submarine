@@ -6,34 +6,42 @@ public class EnginesSerial : MonoBehaviour
     [SerializeField] private int steerVal;
     [SerializeField] private int thrustVal;
 
-    [SerializeField] private SerialController serialController;
+    [SerializeField] private SerialControllerCustomDelimiter serialController;
 
-    public float getDepthVal() {
+    private const byte DEPTH =      1;
+    private const byte STEER =      2;
+    private const byte THRUST =     3;
+
+    void Start() {
+        depthVal = 50;
+        steerVal = 50;
+        thrustVal = 100;
+    }
+
+    public float GetDepthVal() {
         return (depthVal-50) / 50f;
     }
 
-    public float getSteerVal() {
+    public float GetSteerVal() {
         return (50-steerVal) / 50f;
     }
 
-    public float getThrustVal() {
+    public float GetThrustVal() {
         return (100-thrustVal) / 100f;
     }
 
-    void OnMessageArrived(string message) {
-        char type = message[0];
-        switch (type) {
-            case 'D':
-                int.TryParse(message.Substring(1), out depthVal);
-                break;
-            case 'S':
-                int.TryParse(message.Substring(1), out steerVal);
-                break;
-            case 'T':
-                int.TryParse(message.Substring(1), out thrustVal);
-                break;
-            default:
-                break;
+    void OnMessageArrived(byte[] message) {
+        if(message.Length < 2) return;
+        byte data = message[0];
+        byte type = message[1];
+
+        if (type.Equals(DEPTH)) {
+            depthVal = data;
+            // serialController.SendSerialMessage();
+        } else if (type.Equals(STEER)) {
+            steerVal = data;
+        } else if (type.Equals(THRUST)) {
+            thrustVal = data;
         }
     }
 

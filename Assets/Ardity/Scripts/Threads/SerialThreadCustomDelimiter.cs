@@ -62,7 +62,7 @@ public class SerialThreadBinaryDelimited : AbstractSerialThread
 
         // Shift the buffer so next time the unused bytes start at 0 (safe even
         // if there is overlap)
-        System.Array.Copy(buffer, index + 1, buffer, 0, bufferUsed - index);
+        System.Array.Copy(buffer, index+1, buffer, 0, bufferUsed - (index+1));
         bufferUsed -= index + 1;
 
         return returnBuffer;

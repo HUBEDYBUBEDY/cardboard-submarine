@@ -19,32 +19,29 @@ public class Engines : MonoBehaviour
     [SerializeField] private float depthSpeedMax = 5f;         // 1 unit is 1m/s
 
     [SerializeField] private EnginesSerial enginesSerial;
-    [SerializeField] private Slider steering;
-    [SerializeField] private Slider depthControl;
+    [SerializeField] private DepthCheck depthCheck;
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private GuideLine guideLine;
     [SerializeField] private HUDManager hudManager;
 
     // Update is called once per frame
     void FixedUpdate() {
-        float targetSteering = enginesSerial.getSteerVal() * steeringMax;
-        updateSteering(targetSteering);
+        float targetSteering = enginesSerial.GetSteerVal() * steeringMax;
+        UpdateSteering(targetSteering);
 
-        float targetThrust = enginesSerial.getThrustVal() * thrustMax;
-        updateThrust(targetThrust);
+        float targetThrust = enginesSerial.GetThrustVal() * thrustMax;
+        UpdateThrust(targetThrust);
 
-        float targetDepthSpeed = enginesSerial.getDepthVal() * depthSpeedMax;
-        updateDepth(targetDepthSpeed);
+        float targetDepthSpeed = enginesSerial.GetDepthVal() * depthSpeedMax;
+        UpdateDepth(targetDepthSpeed);
 
         guideLine.updateLine(rb.velocity, thrustSpeed/thrustMax, rb.angularVelocity);
 
-        float bearing = Vector2.Angle(rb.GetRelativeVector(transform.up), Vector2.up);
-        if(rb.velocity.x < 0) bearing = 360f - bearing;
-        hudManager.updateText(thrustSpeed*100*(1/KN_TO_MS), bearing, depth);
+        hudManager.updateText(GetSpeed(), GetBearing(), depth);
     }
 
     // Update thrust based on given target
-    void updateThrust(float targetThrust) {
+    void UpdateThrust(float targetThrust) {
         if(targetThrust > thrustSpeed) {
             // Increase/decrease at constant rate with respect to time
             thrustSpeed += thrustAcc*thrustMax*Time.deltaTime;
@@ -57,7 +54,7 @@ public class Engines : MonoBehaviour
     }
 
     // Update steering based on given target (-ve is AC, +ve is C)
-    void updateSteering(float targetSteering) {
+    void UpdateSteering(float targetSteering) {
         if(targetSteering > steeringSpeed) {
             // Increase/decrease at constant rate with respect to time
             steeringSpeed += steeringAcc*steeringMax*Time.deltaTime;
@@ -69,7 +66,7 @@ public class Engines : MonoBehaviour
         rb.angularVelocity = -steeringSpeed;
     }
 
-    void updateDepth(float targetDepthSpeed) {
+    void UpdateDepth(float targetDepthSpeed) {
         if(targetDepthSpeed > depthSpeed) {
             // Increase/decrease at constant rate with respect to time
             depthSpeed += depthAcc*depthSpeedMax*Time.deltaTime;
@@ -80,5 +77,23 @@ public class Engines : MonoBehaviour
         }
         // Increase/decrease at constant rate with respect to time
         depth -= depthSpeed*Time.deltaTime;
+        Mathf.Clamp(depth, 0f, depthCheck.GetDepth());
+    }
+
+    // Return speed in knots
+    public float GetSpeed() {
+        return thrustSpeed*100*(1/KN_TO_MS);
+    }
+
+    // Return bearing in degrees 0-359
+    public float GetBearing() {
+        float bearing = Vector2.Angle(rb.GetRelativeVector(transform.up), Vector2.up);
+        if(rb.velocity.x < 0) bearing = 360f - bearing;
+        return bearing;
+    }
+
+    // Return depth in metres
+    public float GetDepth() {
+        return depth;
     }
 }

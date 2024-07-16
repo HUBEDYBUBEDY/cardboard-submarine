@@ -29,13 +29,23 @@ void timerSetup() {
   sei();
 }
 
-const char DEPTH_PIN = 0;   // A0
-const char STEER_PIN = 1;   // A1
-const char THRUST_PIN = 2;  // A2
+#define DEPTH_PIN 0   // A0
+#define STEER_PIN 1   // A1
+#define THRUST_PIN 2  // A2
+
+#define DELIMETER 0b01111111
+#define END_MARKER '\n'
 const float POTENTIOMETER_MAX = 1023.0;
 
-char message[4];
-char symbol[3] = {"DST"};
+// top 2 bits show value type: Depth, Steer, Thrust
+const byte TYPE[] = {
+  0b00000001,
+  0b00000010,
+  0b00000011
+};
+
+char received[10];
+byte length = 0;
 
 // Run when Timer1 count matches compare register A
 ISR(TIMER1_COMPA_vect) {
@@ -49,16 +59,29 @@ void setup() {
   pinMode(STEER_PIN, INPUT);
   pinMode(THRUST_PIN, INPUT);
   Serial.begin(9600);
-  Serial.println("<Arduino is ready>");
+
+  displaySetup();
   timerSetup();
 }
 
 void loop() {
-
+  checkSerial();
 }
 
 void printVal(char pin) {
-  char val = analogRead(pin) * (100 / POTENTIOMETER_MAX);
-  sprintf(message, "%c%u", symbol[pin], val);
-  Serial.println(message);
+  byte val = analogRead(pin) * (100 / POTENTIOMETER_MAX);
+  byte message[] = {val, TYPE[pin], DELIMETER};
+  Serial.write(message, 3);
+}
+
+void checkSerial() {
+  while (Serial.available() > 0) {
+    char rc = Serial.read();
+    if (rc != END_MARKER) received[length++] = rc;
+    else {
+      updateDisplay(received, length);
+      memset(received, 0, sizeof(received));
+      length = 0;
+    }
+  }
 }
