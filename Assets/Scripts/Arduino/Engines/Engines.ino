@@ -34,17 +34,18 @@ void timerSetup() {
 #define THRUST_PIN 2  // A2
 
 #define DELIMETER 0b01111111
-#define END_MARKER '\n'
+// #define END_MARKER '\n'
 const float POTENTIOMETER_MAX = 1023.0;
 
 // top 2 bits show value type: Depth, Steer, Thrust
 const byte TYPE[] = {
-  0b00000001,
-  0b00000010,
-  0b00000011
+  0b00100000,
+  0b01000000,
+  0b01100000
 };
+const byte TYPE_MASK = 0b01100000;
 
-char received[10];
+unsigned char received[10];
 byte length = 0;
 
 // Run when Timer1 count matches compare register A
@@ -76,9 +77,10 @@ void printVal(char pin) {
 
 void checkSerial() {
   while (Serial.available() > 0) {
-    char rc = Serial.read();
-    if (rc != END_MARKER) received[length++] = rc;
+    unsigned char rc = Serial.read();
+    if (rc != DELIMETER) received[length++] = rc;
     else {
+      // Full message received
       updateDisplay(received, length);
       memset(received, 0, sizeof(received));
       length = 0;

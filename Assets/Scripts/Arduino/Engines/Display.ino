@@ -25,12 +25,31 @@ void displaySetup() {
   display.setTextColor(SSD1306_WHITE);
 }
 
-void updateDisplay(char* string, byte length) {
+void updateDisplay(unsigned char* received, byte length) {
+  uint16_t value = 0;
+
+  if (length >= 2) {
+    // If full message received
+    value = ((received[1] & ~TYPE_MASK) << 7) + received[0];
+    // type = received[1]...
+  } else if (length == 1) {
+    // If lower byte was delimeter
+    value = ((received[0] & ~TYPE_MASK) << 7) + DELIMETER;
+    // type = received[0]...
+  } else {
+    // No characters received
+    return;
+  }
+
+  char message[10];
+  sprintf(message, "%um", value);
+  length = strlen(message);
+
   display.clearDisplay();
   display.setCursor(charOffset(length), 0);
-  display.println(string);
+  display.print(message);
   // display.writeFastHLine(0, 4, display.width(), SSD1306_WHITE);
-  display.display();      // Show initial text
+  display.display();
 }
 
 byte charOffset(byte numOfChars) {

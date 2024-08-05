@@ -26,31 +26,40 @@ public class Engines : MonoBehaviour
 
     // Update is called once per frame
     void FixedUpdate() {
+        float targetDepthSpeed = enginesSerial.GetDepthVal() * depthSpeedMax;
+        UpdateDepth(targetDepthSpeed);
+
         float targetSteering = enginesSerial.GetSteerVal() * steeringMax;
         UpdateSteering(targetSteering);
 
         float targetThrust = enginesSerial.GetThrustVal() * thrustMax;
         UpdateThrust(targetThrust);
 
-        float targetDepthSpeed = enginesSerial.GetDepthVal() * depthSpeedMax;
-        UpdateDepth(targetDepthSpeed);
-
         guideLine.updateLine(rb.velocity, thrustSpeed/thrustMax, rb.angularVelocity);
 
         hudManager.updateText(GetSpeed(), GetBearing(), depth);
     }
 
-    // Update thrust based on given target
-    void UpdateThrust(float targetThrust) {
-        if(targetThrust > thrustSpeed) {
+    void UpdateDepth(float targetDepthSpeed) {
+        int oldDepth = (int) GetDepth();
+
+        if(targetDepthSpeed > depthSpeed) {
             // Increase/decrease at constant rate with respect to time
-            thrustSpeed += thrustAcc*thrustMax*Time.deltaTime;
-            thrustSpeed = Mathf.Clamp(thrustSpeed, 0f, targetThrust);
-        } else if(targetThrust < thrustSpeed) {
-            thrustSpeed -= thrustAcc*thrustMax*Time.deltaTime;
-            thrustSpeed = Mathf.Clamp(thrustSpeed, targetThrust, thrustMax);
+            depthSpeed += depthAcc*depthSpeedMax*Time.deltaTime;
+            depthSpeed = Mathf.Clamp(depthSpeed, -depthSpeedMax, targetDepthSpeed);
+        } else if(targetDepthSpeed < depthSpeed) {
+            depthSpeed -= depthAcc*depthSpeedMax*Time.deltaTime;
+            depthSpeed = Mathf.Clamp(depthSpeed, targetDepthSpeed, depthSpeedMax);
         }
-        rb.velocity = thrustSpeed * rb.GetRelativeVector(transform.up);
+
+        // Increase/decrease at constant rate with respect to time
+        depth -= depthSpeed*Time.deltaTime;
+        depth = Mathf.Clamp(depth, 0f, depthCheck.GetDepth());
+
+        int newDepth = (int) GetDepth();
+        if(oldDepth != newDepth) {
+            enginesSerial.UpdateDisplay(newDepth, EnginesSerial.DisplayType.DEPTH);
+        }
     }
 
     // Update steering based on given target (-ve is AC, +ve is C)
@@ -63,26 +72,27 @@ public class Engines : MonoBehaviour
             steeringSpeed -= steeringAcc*steeringMax*Time.deltaTime;
             steeringSpeed = Mathf.Clamp(steeringSpeed, targetSteering, steeringMax);
         }
+
         rb.angularVelocity = -steeringSpeed;
     }
 
-    void UpdateDepth(float targetDepthSpeed) {
-        if(targetDepthSpeed > depthSpeed) {
+    // Update thrust based on given target
+    void UpdateThrust(float targetThrust) {
+        if(targetThrust > thrustSpeed) {
             // Increase/decrease at constant rate with respect to time
-            depthSpeed += depthAcc*depthSpeedMax*Time.deltaTime;
-            depthSpeed = Mathf.Clamp(depthSpeed, -depthSpeedMax, targetDepthSpeed);
-        } else if(targetDepthSpeed < depthSpeed) {
-            depthSpeed -= depthAcc*depthSpeedMax*Time.deltaTime;
-            depthSpeed = Mathf.Clamp(depthSpeed, targetDepthSpeed, depthSpeedMax);
+            thrustSpeed += thrustAcc*thrustMax*Time.deltaTime;
+            thrustSpeed = Mathf.Clamp(thrustSpeed, 0f, targetThrust);
+        } else if(targetThrust < thrustSpeed) {
+            thrustSpeed -= thrustAcc*thrustMax*Time.deltaTime;
+            thrustSpeed = Mathf.Clamp(thrustSpeed, targetThrust, thrustMax);
         }
-        // Increase/decrease at constant rate with respect to time
-        depth -= depthSpeed*Time.deltaTime;
-        Mathf.Clamp(depth, 0f, depthCheck.GetDepth());
+
+        rb.velocity = thrustSpeed * rb.GetRelativeVector(transform.up);
     }
 
-    // Return speed in knots
-    public float GetSpeed() {
-        return thrustSpeed*100*(1/KN_TO_MS);
+    // Return depth in metres
+    public float GetDepth() {
+        return depth;
     }
 
     // Return bearing in degrees 0-359
@@ -92,8 +102,8 @@ public class Engines : MonoBehaviour
         return bearing;
     }
 
-    // Return depth in metres
-    public float GetDepth() {
-        return depth;
+    // Return speed in knots
+    public float GetSpeed() {
+        return thrustSpeed*100*(1/KN_TO_MS);
     }
 }
