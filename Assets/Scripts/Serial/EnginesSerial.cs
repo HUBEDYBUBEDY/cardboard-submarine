@@ -76,8 +76,5 @@ public class EnginesSerial : MonoBehaviour
 
         byte[] message = {valueBytes[0], valueBytes[1], serialController.separator};
         serialController.SendSerialMessage(message);
-        foreach(byte b in message) {
-            Debug.Log(b);
-        }
     }
 }
