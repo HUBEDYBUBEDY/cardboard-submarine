@@ -1,3 +1,5 @@
+/* Interrupt Timer */
+
 const short CLOCK_PERIOD = 10;      // in ms
 // Counter and compare values (2000 count == 1ms)
 const uint16_t t1_load = 0;
@@ -29,30 +31,41 @@ void timerSetup() {
   sei();
 }
 
+
+/* Joysticks */
+
 #define DEPTH_PIN 0   // A0
 #define STEER_PIN 1   // A1
 #define THRUST_PIN 2  // A2
 
-#define DELIMETER 0b01111111
-// #define END_MARKER '\n'
+// Max value for joystick potentiometer
 const float POTENTIOMETER_MAX = 1023.0;
 
-// top 2 bits show value type: Depth, Steer, Thrust
+
+/* Unity Communication */
+
+#define DELIMETER 0b11111111
+
+// Bits 6-7 show value type: Depth/Steer/Thrust
+const byte TYPE_MASK = 0b11000000;
 const byte TYPE[] = {
-  0b00100000,
   0b01000000,
-  0b01100000
+  0b10000000,
+  0b11000000
 };
-const byte TYPE_MASK = 0b01100000;
 
 unsigned char received[10];
 byte length = 0;
 
-// Run when Timer1 count matches compare register A
+
+/*
+  Read joystick values at fixed interval
+  (run when Timer1 count matches compare register A)
+*/
 ISR(TIMER1_COMPA_vect) {
-  printVal(DEPTH_PIN);
-  printVal(STEER_PIN);
-  printVal(THRUST_PIN);
+  writeVal(DEPTH_PIN);
+  writeVal(STEER_PIN);
+  writeVal(THRUST_PIN);
 }
 
 void setup() {
@@ -69,12 +82,21 @@ void loop() {
   checkSerial();
 }
 
-void printVal(char pin) {
+/*
+  Write joystick value between 0-100 as 3 byte chunk:
+  1) value between 0-100
+  2) type
+  3) delimeter
+*/
+void writeVal(char pin) {
   byte val = analogRead(pin) * (100 / POTENTIOMETER_MAX);
   byte message[] = {val, TYPE[pin], DELIMETER};
   Serial.write(message, 3);
 }
 
+/*
+  Read characters into memory until delimiter, then update display.
+*/
 void checkSerial() {
   while (Serial.available() > 0) {
     unsigned char rc = Serial.read();
