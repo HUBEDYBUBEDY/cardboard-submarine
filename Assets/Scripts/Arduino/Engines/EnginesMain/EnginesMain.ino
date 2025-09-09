@@ -63,9 +63,7 @@ byte length = 0;
   (run when Timer1 count matches compare register A)
 */
 ISR(TIMER1_COMPA_vect) {
-  writeVal(DEPTH_PIN);
-  writeVal(STEER_PIN);
-  writeVal(THRUST_PIN);
+  writeValues();
 }
 
 void setup() {
@@ -82,16 +80,20 @@ void loop() {
   checkSerial();
 }
 
+/* Value 0-100 */
+int readVal(char pin) {
+  return analogRead(pin) * (100 / POTENTIOMETER_MAX);
+}
+
 /*
-  Write joystick value between 0-100 as 3 byte chunk:
-  1) value between 0-100
-  2) type
-  3) delimeter
+  Write joystick values between 0-100 as 3 byte chunk:
+  1) Depth value between 0-100
+  2) Steering value between 0-100
+  3) Thrust value between 0-100
 */
-void writeVal(char pin) {
-  byte val = analogRead(pin) * (100 / POTENTIOMETER_MAX);
-  byte message[] = {val, TYPE[pin], DELIMETER};
-  Serial.write(message, 3);
+void writeValues() {
+  byte message[] = {readVal(DEPTH_PIN), readVal(STEER_PIN), readVal(THRUST_PIN), DELIMETER};
+  Serial.write(message, 4);
 }
 
 /*
