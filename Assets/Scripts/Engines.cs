@@ -16,7 +16,7 @@ public class Engines : MonoBehaviour
   [SerializeField] private float steeringAcc = 0.1f;
   [SerializeField] private float steeringMax = 2f;            // 1 unit is 1deg/s
   [SerializeField] private float depthAcc = 0.1f;
-  [SerializeField] private float depthSpeedMax = 5f;         // 1 unit is 1m/s
+  [SerializeField] private float depthSpeedMax = 5f;          // 1 unit is 1m/s
 
   [SerializeField] private EnginesSerial enginesSerial;
   [SerializeField] private DepthCheck depthCheck;
@@ -63,31 +63,53 @@ public class Engines : MonoBehaviour
   }
 
   // Update steering based on given target (-ve is AC, +ve is C)
-  void UpdateSteering(float targetSteering) {
-    if(targetSteering > steeringSpeed) {
+  void UpdateSteering(float targetSteering)
+  {
+    int oldBearing = (int) GetBearing();
+
+    if (targetSteering > steeringSpeed)
+    {
       // Increase/decrease at constant rate with respect to time
-      steeringSpeed += steeringAcc*steeringMax*Time.deltaTime;
+      steeringSpeed += steeringAcc * steeringMax * Time.deltaTime;
       steeringSpeed = Mathf.Clamp(steeringSpeed, -steeringMax, targetSteering);
-    } else if(targetSteering < steeringSpeed) {
-      steeringSpeed -= steeringAcc*steeringMax*Time.deltaTime;
+    }
+    else if (targetSteering < steeringSpeed)
+    {
+      steeringSpeed -= steeringAcc * steeringMax * Time.deltaTime;
       steeringSpeed = Mathf.Clamp(steeringSpeed, targetSteering, steeringMax);
     }
 
     rb.angularVelocity = -steeringSpeed;
+    
+    int newBearing = (int) GetBearing();
+    if(oldBearing != newBearing) {
+      enginesSerial.UpdateDisplay(newBearing, EnginesSerial.DisplayType.BEARING);
+    }
   }
 
   // Update thrust based on given target
-  void UpdateThrust(float targetThrust) {
-    if(targetThrust > thrustSpeed) {
+  void UpdateThrust(float targetThrust)
+  {
+    int oldSpeed = (int) GetSpeed();
+
+    if (targetThrust > thrustSpeed)
+    {
       // Increase/decrease at constant rate with respect to time
-      thrustSpeed += thrustAcc*thrustMax*Time.deltaTime;
+      thrustSpeed += thrustAcc * thrustMax * Time.deltaTime;
       thrustSpeed = Mathf.Clamp(thrustSpeed, 0f, targetThrust);
-    } else if(targetThrust < thrustSpeed) {
-      thrustSpeed -= thrustAcc*thrustMax*Time.deltaTime;
+    }
+    else if (targetThrust < thrustSpeed)
+    {
+      thrustSpeed -= thrustAcc * thrustMax * Time.deltaTime;
       thrustSpeed = Mathf.Clamp(thrustSpeed, targetThrust, thrustMax);
     }
 
     rb.velocity = thrustSpeed * rb.GetRelativeVector(transform.up);
+
+    int newSpeed = (int) GetSpeed();
+    if(oldSpeed != newSpeed) {
+      enginesSerial.UpdateDisplay(newSpeed, EnginesSerial.DisplayType.SPEED);
+    }
   }
 
   // Return depth in metres
@@ -106,6 +128,6 @@ public class Engines : MonoBehaviour
 
   // Return speed in knots
   public float GetSpeed() {
-    return thrustSpeed*100*(1/KN_TO_MS);
+    return thrustSpeed * 100 / KN_TO_MS;
   }
 }

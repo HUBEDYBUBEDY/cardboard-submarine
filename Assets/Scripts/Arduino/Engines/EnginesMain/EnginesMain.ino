@@ -54,7 +54,7 @@ const byte TYPE[] = {
   0b11000000
 };
 
-unsigned char received[10];
+unsigned char receivedMsg[10];
 byte length = 0;
 
 
@@ -102,11 +102,11 @@ void writeValues() {
 void checkSerial() {
   while (Serial.available() > 0) {
     unsigned char rc = Serial.read();
-    if (rc != DELIMETER) received[length++] = rc;
+    if (rc != DELIMETER) receivedMsg[length++] = rc;
     else {
       // Full message received
-      updateDisplay(received, length);
-      memset(received, 0, sizeof(received));
+      updateDisplay(receivedMsg, length);
+      memset(receivedMsg, 0, sizeof(receivedMsg));
       length = 0;
     }
   }

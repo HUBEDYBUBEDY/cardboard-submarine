@@ -35,8 +35,7 @@ public class SerialControllerCustomDelimiter : MonoBehaviour
              "New messages will be discarded.")]
     public int maxUnreadMessages = 1;
 
-    [Tooltip("Maximum number of unread data messages in the queue. " +
-             "New messages will be discarded.")]
+    [Tooltip("Custom delimeter used to determine end of messages in the queue.")]
     public byte separator = 90;
 
     // Internal reference to the Thread and the object that runs in it.

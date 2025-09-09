@@ -8,21 +8,22 @@ public class EnginesSerial : MonoBehaviour
   [SerializeField] private float thrustVal;
 
   [SerializeField] private SerialControllerCustomDelimiter serialController;
+  [SerializeField] private bool connected = false;
 
   private const byte DEPTH =      0b01000000;
-  private const byte STEER =      0b10000000;
-  private const byte THRUST =     0b11000000;
+  private const byte BEARING =    0b10000000;
+  private const byte SPEED =      0b11000000;
 
   public enum DisplayType {
     DEPTH,
-    STEER,
-    THRUST
+    BEARING,
+    SPEED
   }
 
   void Start() {
     depthVal = 50f;
     steerVal = 50f;
-    thrustVal = 100f;
+    thrustVal = 0f;
   }
 
   public float GetDepthVal() {
@@ -40,14 +41,14 @@ public class EnginesSerial : MonoBehaviour
   // Read joystick values between 0-100
   void OnMessageArrived(byte[] message) {
     if (message.Length < 3) return;
+    if (!connected) {
+      Debug.Log("Engines connected");
+      connected = true;
+    }
 
     depthVal = message[0];
     steerVal = message[1];
     thrustVal = message[2];
-  }
-
-  void OnConnectionEvent(bool success) {
-    Debug.Log(success ? "Engines connected":"Engines disconnected");
   }
 
   public void UpdateDisplay(int value, DisplayType type) {
@@ -55,10 +56,10 @@ public class EnginesSerial : MonoBehaviour
 
     if (type.Equals(DisplayType.DEPTH)) {
       valueBytes[1] = (byte)(valueBytes[1] | DEPTH);
-    } else if (type.Equals(DisplayType.STEER)) {
-      valueBytes[1] = (byte)(valueBytes[1] | STEER);
-    } else if (type.Equals(DisplayType.THRUST)) {
-      valueBytes[1] = (byte)(valueBytes[1] | THRUST);
+    } else if (type.Equals(DisplayType.BEARING)) {
+      valueBytes[1] = (byte)(valueBytes[1] | BEARING);
+    } else if (type.Equals(DisplayType.SPEED)) {
+      valueBytes[1] = (byte)(valueBytes[1] | SPEED);
     }
 
     byte[] message = {valueBytes[0], valueBytes[1], serialController.separator};
