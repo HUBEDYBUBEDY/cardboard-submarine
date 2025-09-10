@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,9 +7,11 @@ public class Engines : MonoBehaviour
   private const float KN_TO_MS = 0.514f;
 
   [SerializeField] private float thrustSpeed;
+  [SerializeField] private float speed = 0f;
   [SerializeField] private float steeringSpeed;
+  [SerializeField] private float bearing = 0f;
   [SerializeField] private float depthSpeed;
-  [SerializeField] private float depth;
+  [SerializeField] private float depth = 0f;
 
   // Values here are most realistic, change depending on gameplay preference
   [SerializeField] private float thrustAcc = 0.1f;
@@ -26,47 +29,52 @@ public class Engines : MonoBehaviour
 
   // Update is called once per frame
   void FixedUpdate() {
+    // Update depth and display (not based on rb physics)
     float targetDepthSpeed = enginesSerial.GetDepthVal() * depthSpeedMax;
     UpdateDepth(targetDepthSpeed);
 
+    // Update steering (display update separate as it relies on rb physics)
     float targetSteering = enginesSerial.GetSteerVal() * steeringMax;
     UpdateSteering(targetSteering);
 
+    // Update thrust (display update separate as it relies on rb physics)
     float targetThrust = enginesSerial.GetThrustVal() * thrustMax;
     UpdateThrust(targetThrust);
 
     guideLine.updateLine(rb.velocity, thrustSpeed/thrustMax, rb.angularVelocity);
 
-    hudManager.updateText(GetSpeed(), GetBearing(), depth);
+    UpdateDisplays();
   }
 
-  void UpdateDepth(float targetDepthSpeed) {
-    int oldDepth = (int) GetDepth();
+  void UpdateDepth(float targetDepthSpeed)
+  {
+    int oldDepth = (int)Math.Round(GetDepth(), 0);
 
-    if(targetDepthSpeed > depthSpeed) {
+    if (targetDepthSpeed > depthSpeed)
+    {
       // Increase/decrease at constant rate with respect to time
-      depthSpeed += depthAcc*depthSpeedMax*Time.deltaTime;
+      depthSpeed += depthAcc * depthSpeedMax * Time.deltaTime;
       depthSpeed = Mathf.Clamp(depthSpeed, -depthSpeedMax, targetDepthSpeed);
-    } else if(targetDepthSpeed < depthSpeed) {
-      depthSpeed -= depthAcc*depthSpeedMax*Time.deltaTime;
+    }
+    else if (targetDepthSpeed < depthSpeed)
+    {
+      depthSpeed -= depthAcc * depthSpeedMax * Time.deltaTime;
       depthSpeed = Mathf.Clamp(depthSpeed, targetDepthSpeed, depthSpeedMax);
     }
 
     // Increase/decrease at constant rate with respect to time
-    depth -= depthSpeed*Time.deltaTime;
+    depth -= depthSpeed * Time.deltaTime;
     depth = Mathf.Clamp(depth, 0f, depthCheck.GetDepth());
 
-    int newDepth = (int) GetDepth();
+    // Update display if changed
+    int newDepth = (int)Math.Round(GetDepth(), 0);
     if(oldDepth != newDepth) {
       enginesSerial.UpdateDisplay(newDepth, EnginesSerial.DisplayType.DEPTH);
     }
   }
 
   // Update steering based on given target (-ve is AC, +ve is C)
-  void UpdateSteering(float targetSteering)
-  {
-    int oldBearing = (int) GetBearing();
-
+  void UpdateSteering(float targetSteering) {
     if (targetSteering > steeringSpeed)
     {
       // Increase/decrease at constant rate with respect to time
@@ -80,18 +88,10 @@ public class Engines : MonoBehaviour
     }
 
     rb.angularVelocity = -steeringSpeed;
-    
-    int newBearing = (int) GetBearing();
-    if(oldBearing != newBearing) {
-      enginesSerial.UpdateDisplay(newBearing, EnginesSerial.DisplayType.BEARING);
-    }
   }
 
   // Update thrust based on given target
-  void UpdateThrust(float targetThrust)
-  {
-    int oldSpeed = (int) GetSpeed();
-
+  void UpdateThrust(float targetThrust) {
     if (targetThrust > thrustSpeed)
     {
       // Increase/decrease at constant rate with respect to time
@@ -105,15 +105,33 @@ public class Engines : MonoBehaviour
     }
 
     rb.velocity = thrustSpeed * rb.GetRelativeVector(transform.up);
+  }
 
-    int newSpeed = (int) GetSpeed();
-    if(oldSpeed != newSpeed) {
-      enginesSerial.UpdateDisplay(newSpeed, EnginesSerial.DisplayType.SPEED);
+  void UpdateDisplays()
+  {
+    int newBearing = (int)Math.Round(GetBearing(), 0);
+    if (bearing != newBearing)
+    {
+      enginesSerial.UpdateDisplay(newBearing, EnginesSerial.DisplayType.BEARING);
+      bearing = newBearing;
     }
+
+    int newSpeed = (int)Math.Round(GetSpeed(), 0);
+    if (speed != newSpeed)
+    {
+      enginesSerial.UpdateDisplay(newSpeed, EnginesSerial.DisplayType.SPEED);
+      speed = newSpeed;
+    }
+
+    hudManager.updateText(
+      (int)Math.Round(GetSpeed(), 0),
+      (int)Math.Round(GetBearing(), 0),
+      (int)Math.Round(GetDepth(), 0));
   }
 
   // Return depth in metres
-  public float GetDepth() {
+  public float GetDepth()
+  {
     return depth;
   }
 

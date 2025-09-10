@@ -40,7 +40,7 @@ public class EnginesSerial : MonoBehaviour
 
   // Read joystick values between 0-100
   void OnMessageArrived(byte[] message) {
-    if (message.Length < 3) return;
+    if (message.Length != 3) return;
     if (!connected) {
       Debug.Log("Engines connected");
       connected = true;

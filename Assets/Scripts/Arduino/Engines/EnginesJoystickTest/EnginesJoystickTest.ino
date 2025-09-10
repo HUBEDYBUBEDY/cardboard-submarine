@@ -34,12 +34,14 @@ void timerSetup() {
 
 /* Joysticks */
 
-#define DEPTH_PIN 0   // A0
-#define STEER_PIN 1   // A1
-#define THRUST_PIN 2  // A2
+#define DEPTH_PIN   0   // A0
+#define STEER_PIN   1   // A1
+#define THRUST_PIN  2   // A2
 
 // Max value for joystick potentiometer
-const float POTENTIOMETER_MAX = 1023.0;
+#define POTENTIOMETER_MAX 1023
+// True if read should be performed in loop
+volatile bool inputRead = false;
 
 
 /* Unity Communication */
@@ -63,38 +65,45 @@ int printCount = 0;
   (run when Timer1 count matches compare register A)
 */
 ISR(TIMER1_COMPA_vect) {
-  /* Print values to Serial Monitor */
-//   Serial.print(printCount++);
-
-//   Serial.print(": Depth ");
-//   Serial.print(readVal(DEPTH_PIN));
-//   Serial.print(", Steer ");
-//   Serial.print(readVal(STEER_PIN));
-//   Serial.print(", Thrust ");
-//   Serial.print(readVal(THRUST_PIN));
-
-//   Serial.println();
-
-  /* Write values to be read by Unity */
-  writeValues();
+  inputRead = true;
 }
 
 void setup() {
   pinMode(DEPTH_PIN, INPUT);
   pinMode(STEER_PIN, INPUT);
   pinMode(THRUST_PIN, INPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   timerSetup();
 }
 
 void loop() {
+  if(inputRead) {
+    inputRead = false;
+    inputScan();
+  }
+}
 
+void inputScan() {
+  /* Print values to Serial Monitor */
+  // Serial.print(printCount++);
+
+  // Serial.print(": Depth ");
+  // Serial.print(readVal(DEPTH_PIN));
+  // Serial.print(", Steer ");
+  // Serial.print(readVal(STEER_PIN));
+  // Serial.print(", Thrust ");
+  // Serial.print(readVal(THRUST_PIN));
+
+  // Serial.println();
+
+  /* Write values to be read by Unity */
+  writeValues();
 }
 
 /* Value 0-100 */
-int readVal(char pin) {
-  return analogRead(pin) * (100 / POTENTIOMETER_MAX);
+uint8_t readVal(char pin) {
+  return (uint8_t)map(analogRead(pin), 0, POTENTIOMETER_MAX, 0, 100);
 }
 
 /*
@@ -104,6 +113,6 @@ int readVal(char pin) {
   3) Thrust value between 0-100
 */
 void writeValues() {
-  byte message[] = {readVal(DEPTH_PIN), readVal(STEER_PIN), readVal(THRUST_PIN), DELIMETER};
+  byte message[4] = {readVal(DEPTH_PIN), readVal(STEER_PIN), readVal(THRUST_PIN), DELIMETER};
   Serial.write(message, 4);
 }

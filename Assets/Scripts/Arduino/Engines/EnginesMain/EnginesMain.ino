@@ -1,3 +1,6 @@
+#include <Wire.h>
+#include <U8g2lib.h>
+
 /* Interrupt Timer */
 
 const short CLOCK_PERIOD = 10;      // in ms
@@ -34,17 +37,35 @@ void timerSetup() {
 
 /* Joysticks */
 
-#define DEPTH_PIN 0   // A0
-#define STEER_PIN 1   // A1
-#define THRUST_PIN 2  // A2
+#define DEPTH_PIN   0   // A0
+#define STEER_PIN   1   // A1
+#define THRUST_PIN  2   // A2
 
 // Max value for joystick potentiometer
-const float POTENTIOMETER_MAX = 1023.0;
+#define POTENTIOMETER_MAX 1023
+// True if read should be performed in loop
+volatile bool inputRead = false;
+
+
+/* Displays */
+
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C display(U8G2_R0, U8X8_PIN_NONE);
+
+#define SCREEN_WIDTH    128
+#define SCREEN_HEIGHT   32
+#define CHAR_WIDTH      6
+#define CHAR_HEIGHT     8
+
+#define DEPTH_CHANNEL   7
+#define BEARING_CHANNEL 6
+#define SPEED_CHANNEL   5
 
 
 /* Unity Communication */
 
 #define DELIMETER 0b11111111
+byte receivedMsg[10];
+uint8_t length = 0;
 
 // Bits 6-7 show value type: Depth/Steer/Thrust
 const byte TYPE_MASK = 0b11000000;
@@ -54,35 +75,37 @@ const byte TYPE[] = {
   0b11000000
 };
 
-unsigned char receivedMsg[10];
-byte length = 0;
-
 
 /*
   Read joystick values at fixed interval
   (run when Timer1 count matches compare register A)
 */
 ISR(TIMER1_COMPA_vect) {
-  writeValues();
+  inputRead = true;
 }
 
 void setup() {
   pinMode(DEPTH_PIN, INPUT);
   pinMode(STEER_PIN, INPUT);
   pinMode(THRUST_PIN, INPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   displaySetup();
   timerSetup();
 }
 
 void loop() {
+  if (inputRead) {
+    inputRead = false;
+    inputScan();
+  }
+
   checkSerial();
 }
 
 /* Value 0-100 */
-int readVal(char pin) {
-  return analogRead(pin) * (100 / POTENTIOMETER_MAX);
+uint8_t readVal(char pin) {
+  return (uint8_t)map(analogRead(pin), 0, POTENTIOMETER_MAX, 0, 100);
 }
 
 /*
@@ -91,10 +114,11 @@ int readVal(char pin) {
   2) Steering value between 0-100
   3) Thrust value between 0-100
 */
-void writeValues() {
-  byte message[] = {readVal(DEPTH_PIN), readVal(STEER_PIN), readVal(THRUST_PIN), DELIMETER};
+void inputScan() {
+  byte message[4] = {readVal(DEPTH_PIN), readVal(STEER_PIN), readVal(THRUST_PIN), DELIMETER};
   Serial.write(message, 4);
 }
+
 
 /*
   Read characters into memory until delimiter, then update display.
@@ -104,7 +128,7 @@ void checkSerial() {
     unsigned char rc = Serial.read();
     if (rc != DELIMETER) receivedMsg[length++] = rc;
     else {
-      // Full message received
+      // // Full message received
       updateDisplay(receivedMsg, length);
       memset(receivedMsg, 0, sizeof(receivedMsg));
       length = 0;
