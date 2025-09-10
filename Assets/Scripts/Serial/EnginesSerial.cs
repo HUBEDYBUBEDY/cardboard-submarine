@@ -20,7 +20,7 @@ public class EnginesSerial : MonoBehaviour
     SPEED
   }
 
-  void Start() {
+  void Awake() {
     depthVal = 50f;
     steerVal = 50f;
     thrustVal = 0f;
