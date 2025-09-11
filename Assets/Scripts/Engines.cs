@@ -148,7 +148,7 @@ public class Engines : MonoBehaviour
     velocityUS += velocityUSAcc * Time.deltaTime;
     velocityUS = Mathf.Clamp(velocityUS, velocityUSMin, velocityUSMax);
 
-    rb.velocity = velocityUS * rb.GetRelativeVector(transform.up);
+    rb.velocity = velocityUS * rb.transform.up;
   }
 
   void UpdateDisplays()
@@ -201,10 +201,9 @@ public class Engines : MonoBehaviour
   // Return bearing in degrees 0-359
   public float GetBearing()
   {
-    Vector2 direction = rb.GetRelativeVector(transform.up);
-    float bearing = Vector2.Angle(direction, Vector2.up);
+    float bearing = Vector2.Angle(rb.transform.up, Vector2.up);
 
-    if (direction.x < 0) bearing = 360f - bearing;
+    if (rb.transform.up.x < 0) bearing = 360f - bearing;
     return bearing;
   }
 
