@@ -14,25 +14,37 @@ public class Engines : MonoBehaviour
   [Tooltip("1 kn = 0.514 m/s = 0.00514cell/s")]
   [SerializeField] private float velocityKN = 0f;
   [SerializeField] private float velocityKNMax = 35f;
-  [SerializeField] private float velocityKNAcc = 1f;
+  [SerializeField] private float velocityKNAcc = 0f;
+  [SerializeField] private float velocityKNAccMax = 3f;
+  [Tooltip("Proportion of max acceleration increased/decreased per second, " +
+    "e.g. 0.1 AccRate = 10 seconds to reach max acceleration")]
+  [SerializeField] private float velocityAccRate = 0.1f;
   [Tooltip("1 unit/s = 1 cell/s = 100m/s")]
   [SerializeField] private float velocityUS;
   [SerializeField] private float velocityUSMax;
   [SerializeField] private float velocityUSAcc;
+  [SerializeField] private float velocityUSAccMax;
 
   // Bearing/Steering
+  [Tooltip("1 unit = 1 deg")]
   [SerializeField] private float bearing = 0f;
   [Tooltip("1 unit = 1 deg/s")]
   [SerializeField] private float angularVelocity;
-  [SerializeField] private float angularVelocityMax = 2f;
+  [SerializeField] private float angularVelocityMax = 5f;
+  [Tooltip("Proportion of max angular velocity increased/decreased per second, " +
+    "e.g. 0.1 Acc = 10 seconds to reach max angular velocity")]
   [SerializeField] private float angularVelocityAcc = 0.1f;
 
   // Depth/Ballast
+  [Tooltip("1 unit = 1m")]
   [SerializeField] private float depth = 0f;
   [Tooltip("1 unit = 1 m/s")]
   [SerializeField] private float depthSpeed;
-  [SerializeField] private float depthAcc = 0.1f;
   [SerializeField] private float depthSpeedMax = 5f;
+  [Tooltip("Proportion of max depth speed increased/decreased per second, " +
+    "e.g. 0.1 Acc = 10 seconds to reach max depth speed")]
+  [SerializeField] private float depthAcc = 0.1f;
+
 
   [SerializeField] private EnginesSerial enginesSerial;
   [SerializeField] private DepthCheck depthCheck;
@@ -55,26 +67,27 @@ public class Engines : MonoBehaviour
     float targetDepthSpeed = enginesSerial.GetDepthVal() * depthSpeedMax;
     UpdateDepth(targetDepthSpeed);
 
-    // Update steering (display update separate as it relies on rb physics)
-    float targetSteering = enginesSerial.GetSteerVal() * angularVelocityMax;
-    UpdateSteering(targetSteering);
+    // Update angular velocity (display update separate as it relies on rb physics)
+    float targetAngularVelocity = enginesSerial.GetSteerVal() * angularVelocityMax;
+    UpdateAngularVelocity(targetAngularVelocity);
 
-    // Update thrust (display update separate as it relies on rb physics)
-    float targetThrust = enginesSerial.GetThrustVal() * velocityUSMax;
-    UpdateThrust(targetThrust);
+    // Update velocity (display update separate as it relies on rb physics)
+    float targetAcc = enginesSerial.GetThrustVal() * velocityUSAccMax;
+    UpdateVelocity(targetAcc);
 
     guideLine.updateLine(rb.velocity, velocityUS / velocityUSMax, rb.angularVelocity);
 
     UpdateDisplays();
   }
 
+  // Update depth speed & depth based on given target speed
   void UpdateDepth(float targetDepthSpeed)
   {
     int oldDepth = (int)Math.Round(GetDepth(), 0);
 
     if (targetDepthSpeed > depthSpeed)
     {
-      // Increase/decrease at constant rate with respect to time
+      // Increase/decrease acceleration at constant rate with respect to time
       depthSpeed += depthAcc * depthSpeedMax * Time.deltaTime;
       depthSpeed = Mathf.Clamp(depthSpeed, -depthSpeedMax, targetDepthSpeed);
     }
@@ -84,7 +97,7 @@ public class Engines : MonoBehaviour
       depthSpeed = Mathf.Clamp(depthSpeed, targetDepthSpeed, depthSpeedMax);
     }
 
-    // Increase/decrease at constant rate with respect to time
+    // Increase/decrease speed at constant rate with respect to time
     depth -= depthSpeed * Time.deltaTime;
     depth = Mathf.Clamp(depth, 0f, depthCheck.GetDepth());
 
@@ -96,38 +109,46 @@ public class Engines : MonoBehaviour
     }
   }
 
-  // Update steering based on given target (-ve is AC, +ve is C)
-  void UpdateSteering(float targetSteering)
+  // Update angular velocity based on given target (-ve is AC, +ve is C)
+  void UpdateAngularVelocity(float targetAngularVelocity)
   {
-    if (targetSteering > angularVelocity)
+    if (targetAngularVelocity > angularVelocity)
     {
       // Increase/decrease at constant rate with respect to time
       angularVelocity += angularVelocityAcc * angularVelocityMax * Time.deltaTime;
-      angularVelocity = Mathf.Clamp(angularVelocity, -angularVelocityMax, targetSteering);
+      angularVelocity = Mathf.Clamp(angularVelocity, -angularVelocityMax, targetAngularVelocity);
     }
-    else if (targetSteering < angularVelocity)
+    else if (targetAngularVelocity < angularVelocity)
     {
       angularVelocity -= angularVelocityAcc * angularVelocityMax * Time.deltaTime;
-      angularVelocity = Mathf.Clamp(angularVelocity, targetSteering, angularVelocityMax);
+      angularVelocity = Mathf.Clamp(angularVelocity, targetAngularVelocity, angularVelocityMax);
     }
 
     rb.angularVelocity = -angularVelocity;
   }
 
-  // Update thrust based on given target
-  void UpdateThrust(float targetThrust)
+  // Update acceleration & velocity based on given target acceleration
+  void UpdateVelocity(float targetAcc)
   {
-    if (targetThrust > velocityUS)
+    if (targetAcc > velocityUSAcc)
     {
+      Debug.Log("Increasing");
       // Increase/decrease at constant rate with respect to time
-      velocityUS += velocityUSAcc * velocityUSMax * Time.deltaTime;
-      velocityUS = Mathf.Clamp(velocityUS, 0f, targetThrust);
+      velocityUSAcc += velocityAccRate * velocityUSAccMax * Time.deltaTime;
+      velocityUSAcc = Mathf.Clamp(velocityUSAcc, -velocityUSAccMax, targetAcc);
     }
-    else if (targetThrust < velocityUS)
+    else if (targetAcc < velocityUSAcc)
     {
-      velocityUS -= velocityUSAcc * velocityUSMax * Time.deltaTime;
-      velocityUS = Mathf.Clamp(velocityUS, targetThrust, velocityUSMax);
+      Debug.Log("Decreasing");
+      velocityUSAcc -= velocityAccRate * velocityUSAccMax * Time.deltaTime;
+      velocityUSAcc = Mathf.Clamp(velocityUSAcc, targetAcc, velocityUSAccMax);
     }
+
+    Debug.Log("TargetAcc = " + convertUStoKN(targetAcc) + ", CurrentAcc = " + convertUStoKN(velocityUSAcc));
+
+    // Increase/decrease velocity by acceleration
+    velocityUS += velocityUSAcc * Time.deltaTime;
+    velocityUS = Mathf.Clamp(velocityUS, 0f, velocityUSMax);
 
     rb.velocity = velocityUS * rb.GetRelativeVector(transform.up);
   }
@@ -159,14 +180,17 @@ public class Engines : MonoBehaviour
     return valueKN * KN_TO_MS / 100f;
   }
 
-  float convertUStoKN(float valueUS) {
+  float convertUStoKN(float valueUS)
+  {
     return valueUS * 100 / KN_TO_MS;
   }
 
   void updateUSValues()
   {
-    velocityUSAcc = convertKNtoUS(velocityKNAcc);
     velocityUSMax = convertKNtoUS(velocityKNMax);
+    velocityUSAccMax = convertKNtoUS(velocityKNAccMax);
+
+    velocityKNAcc = convertUStoKN(velocityUSAcc);
   }
 
   // Return depth in metres

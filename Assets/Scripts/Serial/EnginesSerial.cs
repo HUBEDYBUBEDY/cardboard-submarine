@@ -23,7 +23,7 @@ public class EnginesSerial : MonoBehaviour
   void Awake() {
     depthVal = 50f;
     steerVal = 50f;
-    thrustVal = 0f;
+    thrustVal = 50f;
   }
 
   public float GetDepthVal() {
@@ -35,7 +35,7 @@ public class EnginesSerial : MonoBehaviour
   }
 
   public float GetThrustVal() {
-    return thrustVal / 100f;
+    return (thrustVal-50f) / 50f;
   }
 
   // Read joystick values between 0-100

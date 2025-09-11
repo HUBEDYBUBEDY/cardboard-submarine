@@ -157,6 +157,7 @@ void updateBearing(uint16_t value) {
 
   // Calculate next line to print the value
   int nextPrint = currentVal + (B_PRINT_GAP - (currentVal % B_PRINT_GAP));
+  if (nextPrint >= 360) nextPrint -= 360;
   char stringVal[5];
 
   // Print vertical lines and values
