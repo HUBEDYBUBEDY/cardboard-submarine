@@ -14,6 +14,7 @@ public class Engines : MonoBehaviour
   [Tooltip("1 kn = 0.514 m/s = 0.00514cell/s")]
   [SerializeField] private float velocityKN = 0f;
   [SerializeField] private float velocityKNMax = 35f;
+  [SerializeField] private float velocityKNMin = -5f;
   [SerializeField] private float velocityKNAcc = 0f;
   [SerializeField] private float velocityKNAccMax = 3f;
   [Tooltip("Proportion of max acceleration increased/decreased per second, " +
@@ -22,6 +23,7 @@ public class Engines : MonoBehaviour
   [Tooltip("1 unit/s = 1 cell/s = 100m/s")]
   [SerializeField] private float velocityUS;
   [SerializeField] private float velocityUSMax;
+  [SerializeField] private float velocityUSMin;
   [SerializeField] private float velocityUSAcc;
   [SerializeField] private float velocityUSAccMax;
 
@@ -132,23 +134,19 @@ public class Engines : MonoBehaviour
   {
     if (targetAcc > velocityUSAcc)
     {
-      Debug.Log("Increasing");
       // Increase/decrease at constant rate with respect to time
       velocityUSAcc += velocityAccRate * velocityUSAccMax * Time.deltaTime;
       velocityUSAcc = Mathf.Clamp(velocityUSAcc, -velocityUSAccMax, targetAcc);
     }
     else if (targetAcc < velocityUSAcc)
     {
-      Debug.Log("Decreasing");
       velocityUSAcc -= velocityAccRate * velocityUSAccMax * Time.deltaTime;
       velocityUSAcc = Mathf.Clamp(velocityUSAcc, targetAcc, velocityUSAccMax);
     }
 
-    Debug.Log("TargetAcc = " + convertUStoKN(targetAcc) + ", CurrentAcc = " + convertUStoKN(velocityUSAcc));
-
     // Increase/decrease velocity by acceleration
     velocityUS += velocityUSAcc * Time.deltaTime;
-    velocityUS = Mathf.Clamp(velocityUS, 0f, velocityUSMax);
+    velocityUS = Mathf.Clamp(velocityUS, velocityUSMin, velocityUSMax);
 
     rb.velocity = velocityUS * rb.GetRelativeVector(transform.up);
   }
@@ -188,6 +186,7 @@ public class Engines : MonoBehaviour
   void updateUSValues()
   {
     velocityUSMax = convertKNtoUS(velocityKNMax);
+    velocityUSMin = convertKNtoUS(velocityKNMin);
     velocityUSAccMax = convertKNtoUS(velocityKNAccMax);
 
     velocityKNAcc = convertUStoKN(velocityUSAcc);
