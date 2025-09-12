@@ -36,6 +36,9 @@ const uint8_t S_V_PIXEL_VALUE = S_H_LINE_GAP / S_H_LINE_VALUE; // Value of each 
 
 const uint8_t S_NUM_MARGIN = 2;          // Pixel margin on start of a printed number
 
+const int8_t S_MAX_VALUE = 30;
+const int8_t S_MIN_VALUE = -5;
+
 
 /* TCA9548A helper to select I2C channel */
 void TCA9548A(uint8_t bus) {
@@ -193,7 +196,7 @@ void updateBearing(uint16_t value) {
 }
 
 
-void updateSpeed(uint16_t value) {
+void updateSpeed(int8_t value) {
   TCA9548A(SPEED_CHANNEL);
   // Set display to vertical
   display.setDisplayRotation(U8G2_R3);
@@ -205,7 +208,7 @@ void updateSpeed(uint16_t value) {
 
   // Calculate value and position of bottom line
   for (currentY; currentY < SCREEN_WIDTH; currentY += B_V_LINE_GAP) {
-    if (currentVal - S_H_LINE_VALUE >= 0) {
+    if (currentVal - S_H_LINE_VALUE >= S_MIN_VALUE) {
       currentVal -= S_H_LINE_VALUE;
     } else {
       break;
@@ -216,8 +219,8 @@ void updateSpeed(uint16_t value) {
   display.clearBuffer();
 
   // Calculate next line to print the value
-  int nextPrint = 0;
-  if (currentVal > 0) {
+  int nextPrint = S_MIN_VALUE;
+  if (currentVal > S_MIN_VALUE) {
     nextPrint = currentVal + (S_PRINT_GAP - (currentVal % S_PRINT_GAP));
   }
   char stringVal[5];
@@ -243,6 +246,7 @@ void updateSpeed(uint16_t value) {
     }
 
     currentVal += S_H_LINE_VALUE;
+    if (currentVal > S_MAX_VALUE) break;
   }
 
   // Draw centre line

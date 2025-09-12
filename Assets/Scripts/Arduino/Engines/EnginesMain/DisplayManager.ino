@@ -27,7 +27,7 @@ void updateDisplay(unsigned char* receivedMsg, byte length) {
   } else if (type == TYPE[STEER_PIN]) {
     updateBearing(value);
   } else if (type == TYPE[THRUST_PIN]) {
-    updateSpeed(value);
+    updateSpeed(receivedMsg[0]);
   }
 }
 

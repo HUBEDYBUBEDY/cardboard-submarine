@@ -30,7 +30,7 @@ void setup() {
 
   updateDepth(100);
   updateBearing(0);
-  updateSpeed(50);
+  updateSpeed(-5);
 }
 
 

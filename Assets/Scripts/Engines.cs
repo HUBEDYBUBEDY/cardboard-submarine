@@ -77,7 +77,8 @@ public class Engines : MonoBehaviour
     float targetAcc = enginesSerial.GetThrustVal() * velocityUSAccMax;
     UpdateVelocity(targetAcc);
 
-    Vector2 localVelocity = Vector2.up * rb.velocity.magnitude;
+    // if (velocityUS )
+    Vector2 localVelocity = Vector2.up * velocityUS;
     guideLine.updateLine(localVelocity, rb.angularVelocity);
 
     UpdateDisplays();
