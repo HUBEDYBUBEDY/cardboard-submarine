@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 727201322d1bbba4ab1e2c49aea082ec, type: 3}
-  m_Name: Water 300m
+  m_Name: -10m Flat
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: 50de2b7df112da54c9b5b628aa7ec684, type: 3}
-  m_Color: {r: 0, g: 0.29166672, b: 0.7, a: 1}
+  m_Color: {r: 0.003401375, g: 0.8, b: 0, a: 1}
   m_Transform:
     e00: 1
     e01: 0
@@ -36,4 +36,4 @@ MonoBehaviour:
   m_ColliderType: 1
   isReference: 1
   tileSprite: {fileID: 21300000, guid: 50de2b7df112da54c9b5b628aa7ec684, type: 3}
-  depth: 300
+  depth: -10

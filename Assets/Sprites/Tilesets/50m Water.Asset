@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 727201322d1bbba4ab1e2c49aea082ec, type: 3}
-  m_Name: Water 50m
+  m_Name: 50m Water
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: 50de2b7df112da54c9b5b628aa7ec684, type: 3}
   m_Color: {r: 0, g: 0.6666665, b: 1, a: 1}
