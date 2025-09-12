@@ -18,7 +18,7 @@ public class GuideLine : MonoBehaviour
   [SerializeField] private SplineContainer splineContainer;
   [SerializeField] private Spline guideSpline;
 
-  [SerializeField] private Spline TEMPangleSpline;
+  private const float FORWARD_CUTOFF = 0.01f;
 
   void Start()
   {
@@ -28,7 +28,7 @@ public class GuideLine : MonoBehaviour
     splineContainer.RemoveSplineAt(0);
     guideSpline = splineContainer.AddSpline();
 
-    // Replace with spline starting from sub centre + 1 knot for each sample
+    // Replace with spline that has 1 knot for each sample
     BezierKnot[] knots = new BezierKnot[samples];
     guideSpline.Knots = knots;
 
@@ -39,11 +39,30 @@ public class GuideLine : MonoBehaviour
   // Generate an arc guideline of the path the sub will follow (if velocity & angular velocity constant)
   public void updateLine(Vector2 velocity, float angularVelocity)
   {
+    Vector2 samplePosition = Vector2.zero;
+
+    // If heading approximately forward, draw a straight path
+    if (angularVelocity < FORWARD_CUTOFF && angularVelocity > -FORWARD_CUTOFF)
+    {
+      // For each sample
+      for (int sample = 1; sample < samples; sample++)
+      {
+        // Add proportion of total velocity in straight line
+        samplePosition = Vector2.zero + (velocity * sample / (samples - 1) * guideTime);
+
+        // Update guideline with the sampled position
+        guideSpline.SetKnot(sample, new BezierKnot(new float3(samplePosition.x, samplePosition.y, 0f)));
+      }
+
+      return;
+    }
+
+    // Otherwise draw arc path
+
     // Calculate radius of the arc path
     float angularVelocityRad = angularVelocity * guideTime * Mathf.Deg2Rad;
     float arcRadius = velocity.magnitude * guideTime / angularVelocityRad;
 
-    Vector2 samplePosition = Vector2.zero;
     Vector2 radiusVectToPivot;
     Vector2 radiusVectToArc;
     Vector2 pivot;
@@ -79,11 +98,6 @@ public class GuideLine : MonoBehaviour
         // Rotating clockwise
         radiusVectToArc = Quaternion.Euler(0f, 0f, sampleAngle) * radiusVectToPivot;
         samplePosition = pivot + radiusVectToArc;
-      }
-      else
-      {
-        // Not rotating (edge case)
-        samplePosition = samplePosition + velocity;
       }
 
       // Update guideline with the sampled position
